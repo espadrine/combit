@@ -19,18 +19,20 @@
 # define COMBIT_IT __uint64_t
 #endif
 #define COMBIT_T COMBIT_IT
-#define COMBIT_NGEN 16
-#define COMBIT_STATE_SIZE 80
+#define COMBIT_BUFSIZE 16
+#define COMBIT_STATE_SIZE 128
 typedef struct combit_state {
   COMBIT_IT gears[COMBIT_STATE_SIZE];
   __uint64_t counter;
   __uint128_t s;
   __m256i simdcounter;
+  __m256i simdgears[COMBIT_BUFSIZE];
 } combit_state;
 
-void combit_gen(combit_state *s, COMBIT_T buf[COMBIT_NGEN]);
+void combit_gen(combit_state *s, COMBIT_T buf[COMBIT_BUFSIZE]);
 void print_bits(COMBIT_T v);
 void print_m256i(__m256i avx);
+void print_m128i(__m128i avx);
 void print_state(combit_state *s);
 void combit_detect_cycle(combit_state *s);
 
@@ -42,13 +44,40 @@ void combit_detect_cycle(combit_state *s);
 COMBIT_IT combit_pi[COMBIT_STATE_SIZE] = {
 #if COMBIT_REGSIZE == 8
   0x9E, 0x37, 0x79, 0xB9, 0x7F, 0x4A, 0x7C, 0x15,
+  0xF3, 0x9C, 0xC0, 0x60, 0x5C, 0xED, 0xC8, 0x34,
+  0x10, 0x82, 0x27, 0x6B, 0xF3, 0xA2, 0x72, 0x51,
+  0xF8, 0x6C, 0x6A, 0x11, 0xD0, 0xC1, 0x8E, 0x95,
+  0x27, 0x67, 0xF0, 0xB1, 0x53, 0xD2, 0x7B, 0x7F,
+  0x03, 0x47, 0x04, 0x5B, 0x5B, 0xF1, 0x82, 0x7F,
+  0x01, 0x88, 0x6F, 0x09, 0x28, 0x40, 0x30, 0x02,
+  0xC1, 0xD6, 0x4B, 0xA4, 0x0F, 0x33, 0x5E, 0x36,
+  0xF0, 0x6A, 0xD7, 0xAE, 0x97, 0x17, 0x87, 0x7E,
+  0x85, 0x83, 0x9D, 0x6E, 0xFF, 0xBD, 0x7D, 0xC6,
+  0x64, 0xD3, 0x25, 0xD1, 0xC5, 0x37, 0x16, 0x82,
+  0xCA, 0xDD, 0x0C, 0xCC, 0xFD, 0xFF, 0xBB, 0xE1,
+  0x62, 0x6E, 0x33, 0xB8, 0xD0, 0x4B, 0x43, 0x31,
+  0xBB, 0xF7, 0x3C, 0x79, 0x0D, 0x94, 0xF7, 0x9D,
+  0x47, 0x1C, 0x4A, 0xB3, 0xED, 0x3D, 0x82, 0xA5,
+  0xFE, 0xC5, 0x07, 0x70, 0x5E, 0x4A, 0xE6, 0xE5,
 #elif COMBIT_REGSIZE == 16
   0x9E37, 0x79B9, 0x7F4A, 0x7C15, 0xF39C, 0xC060, 0x5CED, 0xC834,
 #elif COMBIT_REGSIZE == 32
-  0x9E3779B9, 0x7F4A7C15, 0xF39CC060, 0x5CEDC834,
-  0x1082276B, 0xF3A27251, 0xF86C6A11, 0xD0C18E95,
-  0x2767F0B1, 0x53D27B7F, 0x0347045B, 0x5BF1827F,
-  0x01886F09, 0x28403002, 0xC1D64BA4, 0x0F335E36,
+  0x9E3779B9, 0x7F4A7C15, 0xF39CC060, 0x5CEDC834, 0x1082276B, 0xF3A27251, 0xF86C6A11, 0,
+  0xD0C18E95, 0x2767F0B1, 0x53D27B7F, 0x0347045B, 0x5BF1827F, 0x01886F09, 0x28403002, 0,
+  0xC1D64BA4, 0x0F335E36, 0xF06AD7AE, 0x9717877E, 0x85839D6E, 0xFFBD7DC6, 0x64D325D1, 0,
+  0xC5371682, 0xCADD0CCC, 0xFDFFBBE1, 0x626E33B8, 0xD04B4331, 0xBBF73C79, 0x0D94F79D, 0,
+  0x471C4AB3, 0xED3D82A5, 0xFEC50770, 0x5E4AE6E5, 0xE73A9B91, 0xF3AA4DB2, 0x87AE44F3, 0,
+  0x32E923A7, 0x3CB91648, 0xE428E975, 0xA3781EB0, 0x1B49D867, 0x4FA15084, 0x19E0EAA4, 0,
+  0x038B352D, 0x9BAD30F4, 0x485B71A8, 0xEF64452A, 0x0DD40DC8, 0xCB8F9A2D, 0x4C514F1B, 0,
+  0x229DCAA2, 0x22AC268E, 0x9666E4A8, 0x66769145, 0xF5F5880A, 0x9D0ACD3B, 0x9E8C682F, 0,
+  0x4F810320, 0xABEB9403, 0x4E70F216, 0x08C061AB, 0x1C1CAEF1, 0xEBDCEFBC, 0x72134ECF, 0,
+  0x06ED82BF, 0xB7D8EB1A, 0x41901D65, 0xF5C8CAB2, 0xACCBC32E, 0xAB1FBE82, 0x84F2B44B, 0,
+  0xA2E834C5, 0x893A39EA, 0x7865443F, 0x489C37F8, 0x742ACD89, 0x5AFD87B4, 0x67D22A40, 0,
+  0xD098F30D, 0xD2CAFDEB, 0x3ABB3A13, 0x507B46B3, 0xD757FC04, 0x001906E1, 0x767D40C3, 0,
+  0xA3792A26, 0xEEEF2AB5, 0xBD6685B9, 0x15B56294, 0x00FAA684, 0xECBA752D, 0xDDCB5D18, 0,
+  0x576D77B6, 0x52AC0D99, 0x99736866, 0x04128F0C, 0xD4274359, 0x6DEB2D42, 0xC789D64B, 0,
+  0x92658610, 0xB5B95C71, 0x9ADEB8CE, 0x28732634, 0x4E31D59A, 0x59963220, 0xB1A4C427, 0,
+  0x71D454EC, 0x78F12393, 0xBFB4AC54, 0x188E5911, 0x3D7C3544, 0x1F15AA34, 0xA1140703, 0,
 #elif COMBIT_REGSIZE == 64
   0x9E3779B97F4A7C15, 0xF39CC0605CEDC834, 0x1082276BF3A27251, 0xF86C6A11D0C18E95,
   0x2767F0B153D27B7F, 0x0347045B5BF1827F, 0x01886F0928403002, 0xC1D64BA40F335E36,
@@ -79,13 +108,16 @@ COMBIT_IT combit_pi[COMBIT_STATE_SIZE] = {
 
 combit_state combit_init(COMBIT_IT seed[4]) {
   combit_state s = { {0}, 0, 1, _mm256_set_epi64x(0, 0, 0, 0) };
-  for (char i = 0; i < COMBIT_STATE_SIZE; i += 2) {
-    for (char j = 0; j < 4; j++) {
+  for (int i = 0; i < COMBIT_STATE_SIZE; i += 2) {
+    for (int j = 0; j < 4; j++) {
       s.gears[i + 0] = combit_pi[i + 0];
       s.gears[i + 1] = combit_pi[i + 1] ^ seed[j];
     }
   }
-  COMBIT_T buf[COMBIT_NGEN];
+  for (int i = 0; i < COMBIT_BUFSIZE; i++) {
+    s.simdgears[i] = _mm256_load_si256((__m256i*)&s.gears[(256/COMBIT_REGADDR)*i]);
+  }
+  COMBIT_T buf[COMBIT_BUFSIZE];
   // Given incremental rotations, every bit of the initial state will assume
   // every bit position in an A-bit number within A rounds. If B ≤ A,
   // each bit of state therefore affects all bits of state at least once.
@@ -128,15 +160,14 @@ combit_state combit_init(COMBIT_IT seed[4]) {
 // Going through the process manually makes it clear
 // that obtaining a 0011 state is impossible.
 
-inline void combit_gen(combit_state *s, COMBIT_T buf[COMBIT_NGEN]) {
-  //for (char i = 0; i < COMBIT_NGEN; i++) {
+inline void combit_gen(combit_state *s, COMBIT_T buf[COMBIT_BUFSIZE]) {
+  //for (char i = 0; i < COMBIT_BUFSIZE; i++) {
   //  char rot = (++s->counter) & COMBIT_REGADDR;
   //  COMBIT_IT s0 = s->gears[0];
 #if COMBIT_DEBUG >= 2
     print_state(s);
     __int64_t start = _rdtsc();
 #endif
-
   // Notation: each family has a name COMBIT_NNNAxB,
   // where NNN describes its variant, A is the gear size in bits,
   // and B is the number of gears used.
@@ -312,9 +343,28 @@ inline void combit_gen(combit_state *s, COMBIT_T buf[COMBIT_NGEN]) {
   COMBIT_SLCP_PRNG(4);
   COMBIT_SLCP_PRNG(8);
   COMBIT_SLCP_PRNG(12);
-  for (char i = 0; i < COMBIT_NGEN; i++) { buf[i] = s->gears[i]; }
+  for (char i = 0; i < COMBIT_BUFSIZE; i++) { buf[i] = s->gears[5*i]; }
+
+  // COMBIT_SLCPX: 16 parallel COMBIT_SLC with a 64-bit counter spanning gears.
+  // 32×7×16: 0.7 cpb
+  //  8×8×16:     cpb (should be much faster because we do 8 PRNGs in parallel, but AVX-512 only)
+//  s->simdcounter = _mm256_add_epi64(s->simdcounter, _mm256_set_epi64x(1, 1, 1, 1));
+//  __m256i shifted = _mm256_set_epi32(7, 0, 6, 5, 4, 3, 2, 1);
+//  __m128i simdrot = _mm_and_si128(_mm256_castsi256_si128(s->simdcounter), _mm_set_epi64x(COMBIT_REGADDR, COMBIT_REGADDR));
+//  __m128i simdrevrot = _mm_sub_epi64(_mm_set_epi64x(COMBIT_REGSIZE, COMBIT_REGSIZE), simdrot);
+//#define COMBIT_SLCPX_PRNG(START) \
+//  __m256i g##START = s->simdgears[START]; \
+//  __m256i p##START = _mm256_permutevar8x32_epi32(g##START, shifted); \
+//  __m256i r##START = _mm256_or_si256(_mm256_srl_epi32(g##START, simdrot), _mm256_sll_epi32(g##START, simdrevrot)); \
+//  s->simdgears[START] = _mm256_add_epi32(p##START, r##START);
+//  COMBIT_SLCPX_PRNG( 0); COMBIT_SLCPX_PRNG( 1); COMBIT_SLCPX_PRNG( 2); COMBIT_SLCPX_PRNG( 3);
+//  COMBIT_SLCPX_PRNG( 4); COMBIT_SLCPX_PRNG( 5); COMBIT_SLCPX_PRNG( 6); COMBIT_SLCPX_PRNG( 7);
+//  COMBIT_SLCPX_PRNG( 8); COMBIT_SLCPX_PRNG( 9); COMBIT_SLCPX_PRNG(10); COMBIT_SLCPX_PRNG(11);
+//  COMBIT_SLCPX_PRNG(12); COMBIT_SLCPX_PRNG(13); COMBIT_SLCPX_PRNG(14); COMBIT_SLCPX_PRNG(15);
+//  for (char i = 0; i < COMBIT_BUFSIZE; i++) { buf[i] = _mm256_extract_epi32(s->simdgears[i], 0); }
+
 #if COMBIT_DEBUG >= 1
-  for (char i = 0; i < COMBIT_NGEN; i++) { print_bits(buf[i]); printf("\n"); }
+  for (char i = 0; i < COMBIT_BUFSIZE; i++) { print_bits(buf[i]); printf("\n"); }
 #endif
 }
 
@@ -330,6 +380,14 @@ void print_m256i(__m256i avx) {
   COMBIT_IT s[256 / COMBIT_REGSIZE];
   _mm256_store_si256((__m256i*)s, avx);
   for (int i = 0; i < 256 / COMBIT_REGSIZE; i++) {
+    print_bits(s[i]);
+  }
+}
+
+void print_m128i(__m128i avx) {
+  COMBIT_IT s[128 / COMBIT_REGSIZE];
+  _mm_store_si128((__m128i*)s, avx);
+  for (int i = 0; i < 128 / COMBIT_REGSIZE; i++) {
     print_bits(s[i]);
   }
 }

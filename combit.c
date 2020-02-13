@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
   __int64_t cycles = 0, start;
   for (__int64_t bytes = a.bytes; bytes >= 0; bytes -= sizeof(buf)) {
     int wbytes = bytes < sizeof(buf)? bytes: sizeof(buf);
-    for (int i = 0; i < wbytes / sizeof(COMBIT_T); i += COMBIT_NGEN) {
+    for (int i = 0; i < wbytes / sizeof(COMBIT_T); i += COMBIT_BUFSIZE) {
       start = _rdtsc();
       combit_gen(&s, &buf[i]);
       cycles += _rdtsc() - start;

@@ -177,15 +177,15 @@ inline void combit_gen(combit_state *s, COMBIT_T buf[COMBIT_BUFSIZE]) {
   // State size: S = A×(B+1)
   // Cycle between 2^(A-3) and 2^S÷8 = 2^(A×(B+1)-3) bytes.
   // An interesting aspect is that we still get quite far with a zero state.
-  // (eg. 8×4: 2GB of PractRand.)
+  // (eg. 8×4: 2GiB of PractRand.)
   // Benchmarks: please keep in mind the theoretical max cycle, as we get close.
-  // 64×3: 0.3 cpb; RNG_test stdin64:      0.008 GB (mod3n)
-  // 64×4: 0.4 cpb; RNG_test stdin64:      0.512 GB (Low4 FPF)
-  // 64×5: 0.5 cpb; RNG_test stdin64:    128 GB (midly suspicious mod3n at 64GB)
-  //  8×3: 2.5 cpb; RNG_test stdin8:       0.256 GB (very suspicious FPF at 64MB) (max 512MB)
-  //  8×4: 3.4 cpb; RNG_test stdin8:      32 GB (unusual Gap-16 at 8GB) (max 128GB)
-  //  8×5: 4.2 cpb; RNG_test stdin8:    4096 GB (mildly suspicious DC6 at 1TB) (max 32TB)
-  //  8×6: 5.0 cpb; RNG_test stdin8:   >4096 GB (est. 256TB) (max 4PB)
+  // 64×3: 0.3 cpb; RNG_test stdin64:      0.008 GiB (mod3n)
+  // 64×4: 0.4 cpb; RNG_test stdin64:      0.512 GiB (Low4 FPF)
+  // 64×5: 0.5 cpb; RNG_test stdin64:    128 GiB (midly suspicious mod3n at 64GiB)
+  //  8×3: 2.5 cpb; RNG_test stdin8:       0.256 GiB (very suspicious FPF at 64MB) (max 512MB)
+  //  8×4: 3.4 cpb; RNG_test stdin8:      32 GiB (unusual Gap-16 at 8GiB) (max 128GiB)
+  //  8×5: 4.2 cpb; RNG_test stdin8:    4096 GiB (mildly suspicious DC6 at 1TB) (max 32TiB)
+  //  8×6: 5.0 cpb; RNG_test stdin8:  >16384 GiB (est. 256TiB) (max 8PiB)
   //  8×3: TestU01: 2/35/86  (Collision Birthday…)
   //  8×4: TestU01: 1/7/5  (Birthday Collision Serial)
   //  8×5: TestU01: 0/1/1  (Birthday)
@@ -196,26 +196,32 @@ inline void combit_gen(combit_state *s, COMBIT_T buf[COMBIT_BUFSIZE]) {
     //s->gears[4] = COMBIT_ROT(s->gears[4], rot) + s->gears[5];
     //s->gears[5] = COMBIT_ROT(s->gears[5], rot) + s->gears[6];
     //s->gears[6] = COMBIT_ROT(s->gears[6], rot) + s->gears[7];
-    //s->gears[7] = COMBIT_ROT(s->gears[7], rot) + s->counter;
+    //s->gears[3] = COMBIT_ROT(s->gears[3], rot) + s->counter;
+
+    //COMBIT_IT s1 = s->gears[1], s2 = s->gears[2], s3 = s->gears[3], s4 = s->gears[4], s5 = s->gears[5], s6 = s->gears[6], s7 = s->gears[7];
+    //s->gears[0] = (s0 >> 0) + s1;
+    //s->gears[1] = (s2 << 3) + s3;
+    //s->gears[2] = (s1 >> 1) + s0;
+    //s->gears[3] = (s3 << 0) + s2 + s->counter;
 
   // COMBIT_F: Barrel roll with feedback from the first gear. Reversible.
   // State size: S = A×B+log2(A); max cycle = 2^S÷8 bytes.
   // Same first B-1 steps as COMBIT_C, only the last step changes.
   // Benchmarks: (computed with rot = ctz(counter))
-  // 64×4: 0.4 cpb; RNG_test stdin64:      8 GB
-  // 64×5: 0.5 cpb; RNG_test stdin64:     64 GB
-  // 64×6: 0.6 cpb; RNG_test stdin64: >32768 GB
-  // 64×7: 0.8 cpb; RNG_test stdin64:        GB
-  // 64×8: 0.9 cpb; RNG_test stdin64:        GB
-  // 32×4: 0.9 cpb; RNG_test stdin32:    128 GB
-  // 32×5: 1.1 cpb; RNG_test stdin32:     32 GB
-  // 32×6: 1.3 cpb; RNG_test stdin32: >32768 GB
-  // 16×4: 1.7 cpb; RNG_test stdin16:      2 GB
-  // 16×5: 2.2 cpb; RNG_test stdin16:     16 GB
-  // 16×6: 2.6 cpb; RNG_test stdin16: >32768 GB
-  //  8×4: 3.4 cpb; RNG_test stdin8:       2 GB (max 4GB)
-  //  8×5: 4.2 cpb; RNG_test stdin8:       8 GB (rot=cnt: 256GB, unusual FPF at 64GB) (max 1TB)
-  //  8×6: 5.2 cpb; RNG_test stdin8:  >32768 GB (unusual DC6 at 8TB) (max 256TB)
+  // 64×4: 0.4 cpb; RNG_test stdin64:      8 GiB
+  // 64×5: 0.5 cpb; RNG_test stdin64:     64 GiB
+  // 64×6: 0.6 cpb; RNG_test stdin64: >32768 GiB
+  // 64×7: 0.8 cpb; RNG_test stdin64:        GiB
+  // 64×8: 0.9 cpb; RNG_test stdin64:        GiB
+  // 32×4: 0.9 cpb; RNG_test stdin32:    128 GiB
+  // 32×5: 1.1 cpb; RNG_test stdin32:     32 GiB
+  // 32×6: 1.3 cpb; RNG_test stdin32: >32768 GiB
+  // 16×4: 1.7 cpb; RNG_test stdin16:      2 GiB
+  // 16×5: 2.2 cpb; RNG_test stdin16:     16 GiB
+  // 16×6: 2.6 cpb; RNG_test stdin16: >32768 GiB
+  //  8×4: 3.4 cpb; RNG_test stdin8:       2 GiB (max 4GiB)
+  //  8×5: 4.2 cpb; RNG_test stdin8:       8 GiB (rot=cnt: 256GiB, unusual FPF at 64GiB) (max 1TB)
+  //  8×6: 5.2 cpb; RNG_test stdin8:  >32768 GiB (unusual DC6 at 8TB) (max 256TB)
     //s->gears[7] = COMBIT_ROT(s->gears[7], rot) + s->gears[0];
 
   // COMBIT_SL: Barrel roll with no intermediate layers.
@@ -228,17 +234,25 @@ inline void combit_gen(combit_state *s, COMBIT_T buf[COMBIT_BUFSIZE]) {
   //
   // Benchmarks:
   // (note: rot = ctz(counter) is barely stronger on even, much weaker on odd.)
-  // 32×3: 0.7 cpb; RNG_test stdin32:      0.004 GB (unusual mod3n at 1MB)
-  // 32×4: 0.9 cpb; RNG_test stdin32:      0.016 GB (unusual mod3n at 4MB)
-  // 32×5: 1.1 cpb; RNG_test stdin32: >16384 GB (ctz: Low8 FPF at 4TB)
-  // 32×6: 1.3 cpb; RNG_test stdin32:     64 GB (unusual mod3n at 16GB) (ctz: mod3n at 128GB)
-  // 32×7: 1.5 cpb; RNG_test stdin32:  >2048 GB
-  // 32×8: 1.8 cpb; RNG_test stdin32: >16384 GB
+  // 64×3:     cpb; RNG_test stdin64:      0.016 GiB (unusual mod3n at 4MB)
+  // 64×4:     cpb; RNG_test stdin64:      0.064 GiB (unusual mod3n at 16MB)
+  // 64×5:     cpb; RNG_test stdin64:  >8192 GiB
+  // 64×6:     cpb; RNG_test stdin64:    128 GiB (unusual mod3n at 64GiB)
+  // 32×3: 0.7 cpb; RNG_test stdin32:      0.004 GiB (unusual mod3n at 1MB)
+  // 32×4: 0.9 cpb; RNG_test stdin32:      0.016 GiB (unusual mod3n at 4MB)
+  // 32×5: 1.1 cpb; RNG_test stdin32: >32768 GiB (ctz: Low8 FPF at 4TB)
+  // 32×6: 1.3 cpb; RNG_test stdin32:     64 GiB (unusual mod3n at 16GiB) (ctz: mod3n at 128GiB)
+  // 32×7: 1.5 cpb; RNG_test stdin32:  >2048 GiB (est. >300EB)
+  // 32×8: 1.8 cpb; RNG_test stdin32: >16384 GiB (est. 256TB from even extrapolation)
+  // 16×3:     cpb; RNG_test stdin16:      0.002 GiB (unusual mod3n at 512KB) (max 32TiB)
+  // 16×4:     cpb; RNG_test stdin16:      0.000256 GiB (sudden Gap-16)
+  // 16×5:     cpb; RNG_test stdin16:   4096 GiB (sudden Gap-16, DC6, FPF and BCFN) (max 128ZiB)
+  //  8×8:     cpb; RNG_test stdin8:       0.256 GiB (sudden Gap-16)
     //s->gears[4] = COMBIT_ROT(s->gears[4], rot) + s0;
 
   // COMBIT_SL, AVX2 version.
-  // 32×8: 0.8 cpb; RNG_test stdin32:  >2048 GB (AVX2)
-  // 32×8: 0.5 cpb; RNG_test stdin32:    128 GB (AVX2; output 0||4) suspicious mod3n at 32GB
+  // 32×8: 0.8 cpb; RNG_test stdin32:  >4096 GiB (AVX2)
+  // 32×8: 0.5 cpb; RNG_test stdin32:    128 GiB (AVX2; output 0||4) suspicious mod3n at 32GiB
     //__m256i shifted = _mm256_set_epi32(0, 7, 6, 5, 4, 3, 2, 1);
     //__m256i g1 = _mm256_load_si256((__m256i*)s->gears);
     //__m256i gs1 = _mm256_permutevar8x32_epi32(g1, shifted);
@@ -252,20 +266,20 @@ inline void combit_gen(combit_state *s, COMBIT_T buf[COMBIT_BUFSIZE]) {
     //_mm256_store_si256((__m256i*)&s->gears[8], _mm256_add_epi32(gs2, hr2));
 
   // COMBIT_SLC: Combined SL (single-layer) and C (counter feeding).
-  // 64×3: 0.4 cpb; RNG_test stdin64:      4 GB (VERY SUSPICIOUS mod3n at 2GB)
-  // 64×4: 0.4 cpb; RNG_test stdin64:    128 GB (very suspicious mod3n at 64GB)
-  // 64×5: 0.5 cpb; RNG_test stdin64:   >256 GB
-  // 64×6: 0.7 cpb; RNG_test stdin64:    512 GB (very suspicious mod3n at 256GB)
-  //  8×3:     cpb; RNG_test stdin64:      0.000064 GB (sudden Gap-16)
-  //  8×4:     cpb; RNG_test stdin64:      0.000016 GB (sudden Gap-16)
-  //  8×5:     cpb; RNG_test stdin64:      0.016 GB (sudden Gap-16)
-  //  8×6:     cpb; RNG_test stdin64:      0.064 GB (sudden Gap-16)
-  //  8×7:     cpb; RNG_test stdin64:      4 GB (sudden Low1 Gap-16)
-  //  8×8:     cpb; RNG_test stdin64:      0.512 GB (sudden Gap-16)
+  // 64×3: 0.4 cpb; RNG_test stdin64:      4 GiB (VERY SUSPICIOUS mod3n at 2GiB)
+  // 64×4: 0.4 cpb; RNG_test stdin64:    128 GiB (very suspicious mod3n at 64GiB)
+  // 64×5: 0.5 cpb; RNG_test stdin64: >16384 GiB
+  // 64×6: 0.7 cpb; RNG_test stdin64:    512 GiB (very suspicious mod3n at 256GiB)
+  //  8×3:     cpb; RNG_test stdin64:      0.000064 GiB (sudden Gap-16)
+  //  8×4:     cpb; RNG_test stdin64:      0.000016 GiB (sudden Gap-16)
+  //  8×5:     cpb; RNG_test stdin64:      0.016 GiB (sudden Gap-16)
+  //  8×6:     cpb; RNG_test stdin64:      0.064 GiB (sudden Gap-16)
+  //  8×7:     cpb; RNG_test stdin64:      4 GiB (sudden Low1 Gap-16)
+  //  8×8:     cpb; RNG_test stdin64:      0.512 GiB (sudden Gap-16)
     //s->gears[4] = COMBIT_ROT(s->gears[4], rot) + s0 + s->counter;
 
   // COMBIT_SLI: single-layer; parallel & intertwined rounds in 8-int state.
-  // 64×8: 0.5 cpb; RNG_test stdin64: >32768 GB (AVX2)
+  // 64×8: 0.5 cpb; RNG_test stdin64: >32768 GiB (AVX2)
     //__m256i g1 = _mm256_load_si256((__m256i*)s->gears); // g = gears
     //__m256i g2 = _mm256_load_si256((__m256i*)&s->gears[4]);
     //__m256i s1 = _mm256_permute4x64_epi64(g1, 0x39); // s = shifted
@@ -278,7 +292,7 @@ inline void combit_gen(combit_state *s, COMBIT_T buf[COMBIT_BUFSIZE]) {
     //_mm256_store_si256((__m256i*)s->gears, _mm256_xor_si256(n1, n2));
 
   // COMBIT_SLT: 2 rounds in 4-int state with increased mixing.
-  // 64×4: 0.4 cpb; RNG_test stdin64:     16 GB (sudden Low4 FPF failure)
+  // 64×4: 0.4 cpb; RNG_test stdin64:     16 GiB (sudden Low4 FPF failure)
     //__m256i g = _mm256_load_si256((__m256i*)s->gears); // g = gears
     //__m256i br = _mm256_permute4x64_epi64(g, 0x39); // br = barrel roll
     //__m256i br2 = _mm256_permute4x64_epi64(g, 0x4e); // 01001110: 1, 0, 3, 2.
@@ -299,7 +313,17 @@ inline void combit_gen(combit_state *s, COMBIT_T buf[COMBIT_BUFSIZE]) {
   //   (abcdefg bcdefga cdefgab defgabc) efgbcd fgcde gdefa
   // Mixing of each state int: 7 7 7 7 6 5 5
   // Mixing within first int of each round: 2 3 4 5 6 7 7 7
-  // Idea abandoned because of poor results (1GB fail) and segfaults with AVX.
+  // Idea abandoned because of poor results (1GiB fail) and segfaults with AVX.
+
+  // Weaker 32-bit version, good for 64GiB in raw JS.
+    //COMBIT_IT s1 = s->gears[1];
+    //s1 = ((s1        + (s1 <<  8)) & 0xff000000)
+    //  | (((s1 << 11) + (s1 << 16)) & 0x00ff0000)
+    //  | (((s1 >>  9) + (s1 >> 16)) & 0x0000ff00)
+    //  |  ((s1        + (s1 >>  8)) & 0x000000ff);
+    //s->gears[1] = s0;
+    //s->gears[0] = s1 + s->counter;
+    //buf[i] = s1 ^ s0;
 
   // LEHMER
     //buf[i] = (s->s *= 0xda942042e4dd58b5) >> 64;  // 0.2 cpb
@@ -316,8 +340,8 @@ inline void combit_gen(combit_state *s, COMBIT_T buf[COMBIT_BUFSIZE]) {
 //  }
 
   // COMBIT_SLCP: P parallel COMBIT_SLC initialized randomly.
-  // 64×3×4:      cpb; RNG_test stdin64: >16384 GB
-  // 64×5×16: 0.3 cpb; RNG_test stdin64:   >512 GB
+  // 64×3×4:      cpb; RNG_test stdin64: >16384 GiB
+  // 64×5×16: 0.3 cpb; RNG_test stdin64: >32768 GiB
   s->simdcounter = _mm256_add_epi64(s->simdcounter, _mm256_set_epi64x(1, 1, 1, 1));
   __m128i simdrot = _mm_and_si128(_mm256_castsi256_si128(s->simdcounter), _mm_set_epi64x(COMBIT_REGADDR, COMBIT_REGADDR));
   __m128i simdrevrot = _mm_sub_epi64(_mm_set_epi64x(COMBIT_REGSIZE, COMBIT_REGSIZE), simdrot);

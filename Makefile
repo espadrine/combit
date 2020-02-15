@@ -35,15 +35,18 @@ combit: combit.*
 test: test/PractRand test/BigCrush test/perf
 
 test/PractRand: /usr/local/bin/RNG_test combit
+	mkdir -p test
 	./combit | RNG_test stdin64 | tee test/PractRand
 
 test/BigCrush: /usr/local/bin/testu01 combit
+	mkdir -p test
 	./combit | testu01 --big | tee test/BigCrush
 
 # This must be performed with no other processes running.
 test/perf: combit
+	mkdir -p test
 	echo "PRNG fingerprint: $$(./combit | tr -dc a-z | head -c 10; echo)" >test/perf
-	./combit --bytes 4294967296 2>&1 >/dev/null | tee test/perf
+	./combit --bytes 4294967296 2>&1 >/dev/null | tee -a test/perf
 
 # TODO: seed diffusion analysis: avalanche effect
 # (1-bit difference effect on output probability.)
